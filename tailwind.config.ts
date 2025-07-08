@@ -61,6 +61,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				ifood: {
+					red: 'hsl(var(--ifood-red))',
+					'red-dark': 'hsl(var(--ifood-red-dark))',
+					gray: 'hsl(var(--ifood-gray))',
+					'gray-dark': 'hsl(var(--ifood-gray-dark))',
+					success: 'hsl(var(--ifood-success))',
+					warning: 'hsl(var(--ifood-warning))'
 				}
 			},
 			borderRadius: {
