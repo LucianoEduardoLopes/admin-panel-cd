@@ -15,10 +15,12 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
+  preco_desconto: number | null;
   available: boolean | null;
   image: string | null;
   category_id: string | null;
   created_at: string | null;
+  estoque: number | null;
 }
 
 interface Category {
@@ -34,6 +36,8 @@ const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [editingEstoque, setEditingEstoque] = useState<string | null>(null);
+  const [estoqueLoading, setEstoqueLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -93,6 +97,23 @@ const Products = () => {
     }).format(price);
   };
 
+  const renderPrice = (price: number, preco_desconto: number | null) => {
+    if (!preco_desconto || preco_desconto === price) {
+      return <span>{formatPrice(price)}</span>;
+    }
+
+    return (
+      <div className="flex items-center">
+        <span className="line-through text-gray-400 mr-2">
+          {formatPrice(price)}
+        </span>
+        <span className="text-red-600 font-bold">
+          {formatPrice(preco_desconto)}
+        </span>
+      </div>
+    );
+  };
+
   const handleNewProduct = () => {
     setSelectedProduct(null);
     setIsFormOpen(true);
@@ -127,6 +148,43 @@ const Products = () => {
       });
     }
     setDeletingProduct(null);
+  };
+
+  const handleEstoqueEdit = (productId: string) => {
+    setEditingEstoque(productId);
+  };
+
+  const handleEstoqueChange = async (productId: string, value: string) => {
+    if (!value) return;
+    
+    setEstoqueLoading(true);
+    try {
+      const { error } = await supabase
+        .from('produtos')
+        .update({ estoque: parseInt(value) })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => 
+        p.id === productId ? { ...p, estoque: parseInt(value) } : p
+      ));
+
+      toast({
+        title: "Sucesso",
+        description: "Estoque atualizado com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar estoque:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar estoque",
+        variant: "destructive",
+      });
+    } finally {
+      setEstoqueLoading(false);
+      setEditingEstoque(null);
+    }
   };
 
   const handleFormSuccess = () => {
@@ -187,6 +245,7 @@ const Products = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead>Estoque</TableHead>
                 <TableHead>Preço</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ações</TableHead>
@@ -210,8 +269,33 @@ const Products = () => {
                       {getCategoryName(product.category_id)}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    {editingEstoque === product.id ? (
+                      <Input
+                        type="number"
+                        min="0"
+                        defaultValue={product.estoque?.toString() || '0'}
+                        onBlur={(e) => handleEstoqueChange(product.id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleEstoqueChange(product.id, (e.target as HTMLInputElement).value);
+                          }
+                        }}
+                        autoFocus
+                        disabled={estoqueLoading}
+                        className="w-20"
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => handleEstoqueEdit(product.id)}
+                        className="cursor-pointer hover:bg-accent px-2 py-1 rounded"
+                      >
+                        {product.estoque ?? 0}
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">
-                    {formatPrice(product.price)}
+                    {renderPrice(product.price, product.preco_desconto)}
                   </TableCell>
                   <TableCell>
                     <Badge variant={product.available ? "default" : "secondary"}>
@@ -238,7 +322,7 @@ const Products = () => {
                             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                             <AlertDialogDescription>
                               Tem certeza que deseja excluir o produto "{product.name}"? 
-                              Esta ação não pode ser desfeita.
+                              Esta ação não pode be desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

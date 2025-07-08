@@ -19,6 +19,7 @@ interface Product {
   available: boolean | null;
   image: string | null;
   category_id: string | null;
+  estoque: number | null;
 }
 
 interface Category {
@@ -44,8 +45,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     description: '',
     price: '',
     image: '',
-    category_id: '',
-    available: true
+    category_id: 'no-category',
+    available: true,
+    estoque: ''
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,8 +63,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           description: product.description || '',
           price: product.price.toString(),
           image: product.image || '',
-          category_id: product.category_id || '',
-          available: product.available ?? true
+          category_id: product.category_id || 'no-category',
+          available: product.available ?? true,
+          estoque: product.estoque?.toString() || ''
         });
       } else {
         setFormData({
@@ -70,8 +73,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           description: '',
           price: '',
           image: '',
-          category_id: '',
-          available: true
+          category_id: 'no-category',
+          available: true,
+          estoque: ''
         });
       }
     }
@@ -108,21 +112,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         description: formData.description || null,
         price: parseFloat(formData.price),
         image: formData.image || null,
-        category_id: formData.category_id || null,
-        available: formData.available
+        category_id: formData.category_id === 'no-category' ? null : formData.category_id,
+        available: formData.available,
+        estoque: formData.estoque ? parseInt(formData.estoque) : null
       };
 
       let error;
 
       if (product) {
-        // Editar produto existente
         const { error: updateError } = await supabase
           .from('produtos')
           .update(productData)
           .eq('id', product.id);
         error = updateError;
       } else {
-        // Criar novo produto
         const { error: insertError } = await supabase
           .from('produtos')
           .insert([{ ...productData, id: crypto.randomUUID() }]);
@@ -200,6 +203,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="estoque">Estoque</Label>
+            <Input
+              id="estoque"
+              type="number"
+              min="0"
+              value={formData.estoque}
+              onChange={(e) => setFormData(prev => ({ ...prev, estoque: e.target.value }))}
+              placeholder="Quantidade em estoque"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="image">URL da Imagem</Label>
             <Input
               id="image"
@@ -220,7 +235,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <SelectValue placeholder={categoriesLoading ? "Carregando..." : "Selecione uma categoria"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sem categoria</SelectItem>
+                <SelectItem value="no-category">Sem categoria</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
