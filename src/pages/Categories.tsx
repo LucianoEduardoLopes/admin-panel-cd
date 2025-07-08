@@ -4,57 +4,46 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Package, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Tag, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ProductForm } from '@/components/ProductForm';
+import { CategoryForm } from '@/components/CategoryForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  available: boolean | null;
-  image: string | null;
-  category_id: string | null;
-  created_at: string | null;
-}
 
 interface Category {
   id: string;
   name: string;
+  type: string | null;
+  order: number | null;
+  created_at: string | null;
 }
 
-const Products = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchProducts();
     fetchCategories();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
-        .from('produtos')
+        .from('categorias')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('order', { ascending: true, nullsFirst: false });
 
       if (error) throw error;
-      setProducts(data || []);
+      setCategories(data || []);
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+      console.error('Erro ao carregar categorias:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar produtos",
+        description: "Erro ao carregar categorias",
         variant: "destructive",
       });
     } finally {
@@ -62,75 +51,48 @@ const Products = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('categorias')
-        .select('id, name');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
-    }
-  };
-
-  const getCategoryName = (categoryId: string | null) => {
-    if (!categoryId) return 'Sem categoria';
-    const category = categories.find(cat => cat.id === categoryId);
-    return category?.name || 'Categoria não encontrada';
-  };
-
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (category.type && category.type.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
-
-  const handleNewProduct = () => {
-    setSelectedProduct(null);
+  const handleNewCategory = () => {
+    setSelectedCategory(null);
     setIsFormOpen(true);
   };
 
-  const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product);
+  const handleEditCategory = (category: Category) => {
+    setSelectedCategory(category);
     setIsFormOpen(true);
   };
 
-  const handleDeleteProduct = async (product: Product) => {
+  const handleDeleteCategory = async (category: Category) => {
     try {
       const { error } = await supabase
-        .from('produtos')
+        .from('categorias')
         .delete()
-        .eq('id', product.id);
+        .eq('id', category.id);
 
       if (error) throw error;
 
       toast({
         title: "Sucesso",
-        description: "Produto excluído com sucesso!",
+        description: "Categoria excluída com sucesso!",
       });
 
-      fetchProducts();
+      fetchCategories();
     } catch (error) {
-      console.error('Erro ao excluir produto:', error);
+      console.error('Erro ao excluir categoria:', error);
       toast({
         title: "Erro",
-        description: "Erro ao excluir produto",
+        description: "Erro ao excluir categoria",
         variant: "destructive",
       });
     }
-    setDeletingProduct(null);
   };
 
   const handleFormSuccess = () => {
-    fetchProducts();
+    fetchCategories();
   };
 
   if (loading) {
@@ -145,14 +107,14 @@ const Products = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Produtos</h1>
+          <h1 className="text-3xl font-bold text-foreground">Categorias</h1>
           <p className="text-muted-foreground mt-2">
-            Gerencie todos os produtos da sua loja
+            Gerencie as categorias dos seus produtos
           </p>
         </div>
-        <Button onClick={handleNewProduct}>
+        <Button onClick={handleNewCategory}>
           <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
+          Nova Categoria
         </Button>
       </div>
 
@@ -161,18 +123,18 @@ const Products = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Lista de Produtos
+                <Tag className="h-5 w-5" />
+                Lista de Categorias
               </CardTitle>
               <CardDescription>
-                {products.length} produto(s) cadastrado(s)
+                {categories.length} categoria(s) cadastrada(s)
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar produtos..."
+                  placeholder="Buscar categorias..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-80"
@@ -186,44 +148,37 @@ const Products = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Preço</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Ordem</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
+              {filteredCategories.map((category) => (
+                <TableRow key={category.id}>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      {product.description && (
-                        <div className="text-sm text-muted-foreground truncate max-w-xs">
-                          {product.description}
-                        </div>
-                      )}
-                    </div>
+                    <div className="font-medium">{category.name}</div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">
-                      {getCategoryName(product.category_id)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {formatPrice(product.price)}
+                    {category.type ? (
+                      <Badge variant="outline">{category.type}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={product.available ? "default" : "secondary"}>
-                      {product.available ? "Disponível" : "Indisponível"}
-                    </Badge>
+                    {category.order !== null ? (
+                      <Badge variant="secondary">{category.order}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleEditProduct(product)}
+                        onClick={() => handleEditCategory(category)}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -237,13 +192,13 @@ const Products = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja excluir o produto "{product.name}"? 
-                              Esta ação não pode ser desfeita.
+                              Tem certeza que deseja excluir a categoria "{category.name}"? 
+                              Esta ação não pode ser desfeita e pode afetar produtos vinculados.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteProduct(product)}>
+                            <AlertDialogAction onClick={() => handleDeleteCategory(category)}>
                               Excluir
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -256,20 +211,20 @@ const Products = () => {
             </TableBody>
           </Table>
           
-          {filteredProducts.length === 0 && (
+          {filteredCategories.length === 0 && (
             <div className="text-center py-8">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum produto encontrado</h3>
+              <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Nenhuma categoria encontrada</h3>
               <p className="text-muted-foreground">
-                {searchTerm ? 'Tente ajustar sua busca' : 'Comece adicionando seu primeiro produto'}
+                {searchTerm ? 'Tente ajustar sua busca' : 'Comece adicionando sua primeira categoria'}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <ProductForm
-        product={selectedProduct}
+      <CategoryForm
+        category={selectedCategory}
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSuccess={handleFormSuccess}
@@ -278,4 +233,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default Categories;

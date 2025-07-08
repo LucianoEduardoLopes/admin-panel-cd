@@ -7,6 +7,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AdminLayout } from "./layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
+import Categories from "./pages/Categories";
+import Schedule from "./pages/Schedule";
+import Delivery from "./pages/Delivery";
+import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -33,10 +37,7 @@ const App = () => (
             } />
             <Route path="/categories" element={
               <AdminLayout>
-                <div className="text-center py-8">
-                  <h1 className="text-2xl font-bold">Categorias</h1>
-                  <p className="text-muted-foreground mt-2">Em desenvolvimento...</p>
-                </div>
+                <Categories />
               </AdminLayout>
             } />
             <Route path="/optionals" element={
@@ -49,18 +50,12 @@ const App = () => (
             } />
             <Route path="/schedule" element={
               <AdminLayout>
-                <div className="text-center py-8">
-                  <h1 className="text-2xl font-bold">Horários de Funcionamento</h1>
-                  <p className="text-muted-foreground mt-2">Em desenvolvimento...</p>
-                </div>
+                <Schedule />
               </AdminLayout>
             } />
             <Route path="/delivery" element={
               <AdminLayout>
-                <div className="text-center py-8">
-                  <h1 className="text-2xl font-bold">Configurações de Frete</h1>
-                  <p className="text-muted-foreground mt-2">Em desenvolvimento...</p>
-                </div>
+                <Delivery />
               </AdminLayout>
             } />
             <Route path="/store" element={
@@ -81,10 +76,7 @@ const App = () => (
             } />
             <Route path="/orders" element={
               <AdminLayout>
-                <div className="text-center py-8">
-                  <h1 className="text-2xl font-bold">Pedidos</h1>
-                  <p className="text-muted-foreground mt-2">Em desenvolvimento...</p>
-                </div>
+                <Orders />
               </AdminLayout>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

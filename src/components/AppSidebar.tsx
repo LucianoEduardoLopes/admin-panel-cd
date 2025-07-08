@@ -60,7 +60,7 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-bold text-lg text-primary">iFood Admin</h2>
+              <h2 className="font-bold text-lg text-primary">Cardápio Digital Admin</h2>
               <p className="text-xs text-muted-foreground">Painel Administrativo</p>
             </div>
           )}
